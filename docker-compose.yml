@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  data_loader:
+    build: .
+    volumes:
+    - type: volume
+      source: coviddi_data
+      target: /data
+    environment:
+    - COVIDDI_HOME=/data/coviddi
+    - INFLUX_HOST=influxdb
+    - INFLUX_PORT=8086
+    - INFLUXDB_DB=coviddi
+    - INFLUXDB_USER=dataload
+    - INFLUXDB_USER_PASSWORD
+  influxdb:
+    image: influxdb:1.8
+    ports:
+    - 8086:8086
+    environment:
+    - INFLUXDB_DB=coviddi
+    - INFLUXDB_USER=dataload
+    - INFLUXDB_USER_PASSWORD
+    - INFLUXDB_READ_USER=grafana
+    - INFLUXDB_READ_USER_PASSWORD=grafana
+    - INFLUXDB_HTTP_FLUX_ENABLED=true
+    - INFLUXDB_REPORTING_DISABLED=true
+  grafana:
+    image: grafana/grafana
+  nginx:
+    image: nginx
+    environment:
+      - NGINX_HOST
+    ports:
+    - 8000:8000
+    volumes:
+    - type: bind
+      source: ./nginx
+      target: /etc/nginx/templates
+    - type: volume
+      source: coviddi_data
+      target: /data
+
+volumes:
+  coviddi_data:
