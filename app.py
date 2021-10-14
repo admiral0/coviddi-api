@@ -18,6 +18,7 @@ COVIDDI_REPO_DIR = 'Italy'
 
 os.makedirs(COVIDDI_PATH, exist_ok=True)
 
+
 def _keep_refreshing_repo(poison_pill: Queue, results: Queue, repo_url: str, repo_path: str):
     r = GitRepo(repo_url, repo_path)
     l = DataLoaderItaly(repo_path)
@@ -46,9 +47,11 @@ process = Process(
 )
 process.start()
 
+
 def _cleanup():
     poison.put(True)
     process.join(timeout=10)
+
 
 atexit.register(_cleanup)
 
@@ -57,8 +60,8 @@ DATA: DataLoaderItaly
 
 INFO, DATA = updates.get(block=True)
 
-class DataUpdater(Thread):
 
+class DataUpdater(Thread):
     def __init__(self, group: None = ..., target: Optional[Callable[..., Any]] = ..., name: Optional[str] = ...,
                  args: Iterable[Any] = ..., kwargs: Mapping[str, Any] = ..., *, daemon: Optional[bool] = ...) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
@@ -80,6 +83,7 @@ def android_api_v1():
     )
     return r
 
+
 @app.route('/api/v1/italy')
 def api_v1_italy():
     response = app.response_class(
@@ -90,6 +94,7 @@ def api_v1_italy():
     response.headers['X-Commit-Id'] = INFO.commit_id
     response.headers['X-Last-Updated'] = INFO.commit_time.timestamp()
     return response
+
 
 @app.route('/api/v1/regioni')
 def api_v1_regioni():

@@ -8,15 +8,18 @@ import re
 COMMIT_RE = re.compile(r'^commit\s+([a-f0-9]+)$')
 DATE_RE = re.compile(r'^Date:\s+(.+)$')
 
+
 def _build_git_or_die_tryin(path):
     g = Git(path)
     g.status()
     return g
 
+
 @dataclass
 class GitInfo:
     commit_id: str
     commit_time: datetime
+
 
 class GitRepo:
     info: GitInfo
@@ -29,6 +32,7 @@ class GitRepo:
         self.info = GitInfo('unknown', datetime.fromtimestamp(0))
 
         self._refresh_info()
+
     def poll(self):
         updated = len(self.g.fetch().lines) > 0
         if updated:

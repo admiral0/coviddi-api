@@ -17,6 +17,7 @@ DIFFS = {
     'casi_testati',
 }
 
+
 class DataLoaderItaly:
     def __init__(self, repo_path):
         converters = {
@@ -42,7 +43,6 @@ class DataLoaderItaly:
             for field in DIFFS:
                 if field in df:
                     df[field + '_dt'] = df[field].diff()
-
 
         bundle = {
             'italia': nation.replace({numpy.nan: None}).to_dict('records'),
