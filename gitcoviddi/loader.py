@@ -51,7 +51,7 @@ class DataLoaderItaly:
         }
 
         self.android_bundle_v1 = json.dumps(bundle)
-        self.italy = nation.to_csv()
-        self.regions = regions.to_csv()
-        self.provinces = provinces.to_csv()
+        self.italy = nation
+        self.regions = regions
+        self.provinces = provinces
 

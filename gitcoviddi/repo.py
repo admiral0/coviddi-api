@@ -28,7 +28,7 @@ class GitRepo:
         try:
             self.g = _build_git_or_die_tryin(path)
         except CmdError:
-            self.g = Git.clone_repo(repository, path)
+            self.g = Git.clone_repo(repository, path, verbose=True)
         self.info = GitInfo('unknown', datetime.fromtimestamp(0))
 
         self._refresh_info()
