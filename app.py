@@ -1,6 +1,7 @@
 from typing import Optional, Callable, Any, Iterable, Mapping
 
 from flask import Flask
+from prometheus_client import start_http_server, Summary
 from multiprocessing import Queue, Process
 from threading import Thread
 from queue import Empty
@@ -10,6 +11,7 @@ import atexit
 from gitcoviddi.repo import GitRepo, GitInfo
 from gitcoviddi.loader import DataLoaderItaly
 
+start_http_server(25000)
 app = Flask(__name__, static_folder='static')
 
 COVIDDI_REPO = os.getenv('COVIDDI_REPO', 'https://github.com/pcm-dpc/COVID-19.git')
