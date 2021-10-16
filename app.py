@@ -3,7 +3,8 @@ from typing import Optional, Callable, Any, Iterable, Mapping
 
 from flask import Flask
 from prometheus_client import start_http_server, Summary
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 from multiprocessing import Queue, Process
 from threading import Thread
 from queue import Empty
@@ -24,9 +25,8 @@ COVIDDI_PATH = os.getenv('COVIDDI_HOME', os.path.join(os.getenv('HOME'), 'covidd
 
 INFLUX_HOST = os.getenv('INFLUX_HOST', "")
 INFLUX_PORT = os.getenv('INFLUX_PORT', "")
-INFLUX_DB   = os.getenv('INFLUX_DB', "coviddi")
-INFLUX_USER = os.getenv('INFLUXDB_USER', "")
-INFLUX_PASS = os.getenv('INFLUXDB_USER_PASSWORD', "")
+INFLUX_ORG   = os.getenv('INFLUX_ORG', "coviddi")
+INFLUX_TOKEN = os.getenv('INFLUXDB_TOKEN', "")
 
 COVIDDI_REPO_DIR = 'Italy'
 
@@ -70,37 +70,34 @@ def _cleanup():
 atexit.register(_cleanup)
 
 INFO: GitInfo
-DATA: Any[DataLoaderItaly,None]
+DATA: DataLoaderItaly
 
 INFO = GitInfo("none", datetime.datetime.fromtimestamp(0))
 DATA = None
 
+
 class DataUpdater(Thread):
-    def __init__(self, group: None = ..., target: Optional[Callable[..., Any]] = ..., name: Optional[str] = ...,
-                 args: Iterable[Any] = ..., kwargs: Mapping[str, Any] = ..., *, daemon: Optional[bool] = ...) -> None:
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.daemon = True
         self.db = None
         if len(INFLUX_HOST) > 0:
-            self.db = InfluxDBClient(INFLUX_HOST, int(INFLUX_PORT), INFLUX_USER, INFLUX_PASS, INFLUX_DB)
-            self.db.switch_database(INFLUX_DB)
+            self.db = InfluxDBClient(url=f"http://{INFLUX_HOST}:{INFLUX_PORT}",  token=INFLUX_TOKEN, org=INFLUX_ORG)
+            self.write = self.db.write_api(write_options=SYNCHRONOUS)
 
     def update_influx(self):
         pp = []
         for date, fields in DATA.italy.to_dict('index').items():
-            add_fields = {}
+            p = Point("italia")
+            p.time(date.value)
             for k, v in fields.items():
                 if type(v) is str:
-                    continue
+                    p.tag(k, v)
                 if not np.isnan(v):
-                    add_fields[k] = int(v)
-            pp.append({
-                "measurement": 'italia',
-                "time": int(date.value),
-                "fields": add_fields
-            })
+                    p.field(k, v)
+            pp.append(p)
 
-        self.db.write_points(pp)
+        self.write.write("coviddi", "coviddi", pp)
 
     def run(self) -> None:
         global INFO
@@ -109,6 +106,7 @@ class DataUpdater(Thread):
             INFO, DATA = updates.get(block=True)
             if self.db is not None:
                 self.update_influx()
+
 
 updater_thread = DataUpdater()
 updater_thread.start()

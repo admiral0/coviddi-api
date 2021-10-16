@@ -3,43 +3,31 @@ services:
   data_loader:
     build: .
     volumes:
-    - type: volume
-      source: coviddi_data
-      target: /data
+    - "./data:/data"
+    ports:
+      - "5000:5000"
+      - "25000:25000"
     environment:
     - COVIDDI_HOME=/data/coviddi
     - INFLUX_HOST=influxdb
     - INFLUX_PORT=8086
-    - INFLUXDB_DB=coviddi
-    - INFLUXDB_USER=dataload
-    - INFLUXDB_USER_PASSWORD
+    - INFLUXDB_ORG=coviddi
+    - INFLUXDB_TOKEN=antani22
   influxdb:
-    image: influxdb:1.8
+    image: influxdb:2.0.9
     ports:
-    - 8086:8086
+    - "8086:8086"
     environment:
-    - INFLUXDB_DB=coviddi
-    - INFLUXDB_USER=dataload
-    - INFLUXDB_USER_PASSWORD
-    - INFLUXDB_READ_USER=grafana
-    - INFLUXDB_READ_USER_PASSWORD=grafana
-    - INFLUXDB_HTTP_FLUX_ENABLED=true
-    - INFLUXDB_REPORTING_DISABLED=true
-  grafana:
-    image: grafana/grafana
-  nginx:
-    image: nginx
-    environment:
-      - NGINX_HOST
-    ports:
-    - 8000:8000
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=dataload
+      - DOCKER_INFLUXDB_INIT_PASSWORD=antani22
+      - DOCKER_INFLUXDB_INIT_ORG=coviddi
+      - DOCKER_INFLUXDB_INIT_BUCKET=coviddi
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=antani22
     volumes:
-    - type: bind
-      source: ./nginx
-      target: /etc/nginx/templates
-    - type: volume
-      source: coviddi_data
-      target: /data
+      - influx_data:/var/lib/influxdb2
+      - influx_config:/etc/influxdb2
 
 volumes:
-  coviddi_data:
+  influx_data:
+  influx_config:

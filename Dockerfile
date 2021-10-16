@@ -3,6 +3,7 @@ FROM python:3.9
 COPY ./requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install -r requirements.txt
+RUN pip install uwsgi
 COPY . /app
 VOLUME ['/coviddi']
 ENV COVIDDI_HOME="/coviddi"
